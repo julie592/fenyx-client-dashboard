@@ -159,3 +159,32 @@ app.listen(process.env.PORT || 5000, async () => {
   console.log('Fenyx 10-channel worker running on port 5000');
   await runScheduledSync();
 });
+
+// --- FENYX FIELD REGISTRY API ---
+// This powers the Data Explorer, Dashboard filters, and Export field selectors
+app.get('/api/fields', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, name, field_type, data_type, platform, aggregation 
+       FROM field_registry 
+       WHERE is_active = TRUE 
+       ORDER BY field_type ASC, name ASC`
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- NORMALIZED DATA QUERY ENGINE (PREVIEW) ---
+// This will eventually power the Data Explorer and UI charts
+app.post('/api/data/query', async (req, res) => {
+  const { dimensions, metrics, date_range, filters } = req.body;
+  
+  // NOTE: Full SQL query builder logic will be implemented in Phase 3. 
+  // Returning schema confirmation for now.
+  res.json({ 
+    status: 'Engine Ready', 
+    message: 'Data architecture established. Ready to receive normalized API payloads.' 
+  });
+});
