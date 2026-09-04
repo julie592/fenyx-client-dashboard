@@ -18,7 +18,17 @@ const auth = new google.auth.GoogleAuth({
 });
 const sheets = google.sheets({ version: 'v4', auth });
 
-// Platform Dataset Generator with 10 Channels
+async function ensureTabsExist(spreadsheetId, requiredTabs) {
+  const meta = await sheets.spreadsheets.get({ spreadsheetId });
+  const existingTabs = meta.data.sheets.map(s => s.properties.title);
+  const missingTabs = requiredTabs.filter(tab => !existingTabs.includes(tab));
+
+  if (missingTabs.length > 0) {
+    const requests = missingTabs.map(title => ({ addSheet: { properties: { title } } }));
+    await sheets.spreadsheets.batchUpdate({ spreadsheetId, requestBody: { requests } });
+  }
+}
+
 function generatePlatformRows(platform) {
   const headers = ['Date', 'Platform', 'Campaign / Ad Name', 'Spend ($)', 'Clicks', 'Purchases', 'CPA ($)'];
   const today = new Date().toISOString().split('T')[0];
@@ -46,8 +56,7 @@ function generatePlatformRows(platform) {
     case 'taboola':
       return [
         headers,
-        [today, 'Taboola Native', 'ATF_Taboola_ContentFeed_US', 3400.00, 12200, 180, 18.88],
-        [today, 'Taboola Native', 'Taboola_ArticleWidget_TopPerformers', 2100.00, 7800, 95, 22.10]
+        [today, 'Taboola Native', 'ATF_Taboola_ContentFeed_US', 3400.00, 12200, 180, 18.88]
       ];
     case 'taboola_video':
       return [
@@ -75,7 +84,6 @@ function generatePlatformRows(platform) {
         [today, 'PropellerAds', 'ATF_Propeller_Push_Global', 3050.00, 8000, 220, 13.86]
       ];
     default:
-      // Unified / Master Rollup
       return [
         headers,
         [today, 'Meta Ads', 'ATF_Meta_AdvantagePlus_US', 14200.00, 42100, 1050, 13.52],
@@ -92,12 +100,15 @@ function generatePlatformRows(platform) {
 }
 
 async function runScheduledSync() {
-  console.log('\n[Fenyx Engine] Executing 10-channel multi-tab sync...');
+  console.log('\n[Fenyx Engine] Executing overwrite-mode 10-channel sync...');
   try {
     const { rows: sources } = await pool.query("SELECT * FROM data_sources WHERE status = 'ACTIVE'");
+    const targetTabs = ['Unified', 'Meta', 'Google', 'TikTok', 'Taboola', 'Taboola Video', 'Reddit', 'Microsoft', 'Twitter', 'Propeller'];
 
     for (const source of sources) {
       if (!source.sheet_id) continue;
+
+      await ensureTabsExist(source.sheet_id, targetTabs);
 
       const platformsToSync = [
         { name: 'Unified', key: 'unified' },
@@ -115,6 +126,13 @@ async function runScheduledSync() {
       for (const target of platformsToSync) {
         const rows = generatePlatformRows(target.key);
 
+        // Wipe tab contents first so old data never lingers
+        await sheets.spreadsheets.values.clear({
+          spreadsheetId: source.sheet_id,
+          range: `${target.name}!A:Z`
+        });
+
+        // Write fresh headers and platform performance snapshot
         await sheets.spreadsheets.values.update({
           spreadsheetId: source.sheet_id,
           range: `${target.name}!A1`,
@@ -122,7 +140,7 @@ async function runScheduledSync() {
           requestBody: { values: rows }
         });
 
-        console.log(`✅ [Synced] Updated '${target.name}' tab with ${rows.length - 1} rows.`);
+        console.log(`✅ [Replaced] Refreshed '${target.name}' tab with ${rows.length - 1} active rows.`);
       }
     }
   } catch (err) {
@@ -134,10 +152,10 @@ cron.schedule('0 */6 * * *', runScheduledSync);
 
 app.post('/api/sync/now', async (req, res) => {
   await runScheduledSync();
-  res.json({ status: 'Expanded 10-channel sync completed' });
+  res.json({ status: '10-channel overwrite sync completed' });
 });
 
 app.listen(process.env.PORT || 5000, async () => {
-  console.log('Fenyx 10-channel sync worker running on port 5000');
+  console.log('Fenyx 10-channel worker running on port 5000');
   await runScheduledSync();
 });
