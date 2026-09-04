@@ -31,7 +31,7 @@ export default function GoogleSheetSync() {
       await new Promise((resolve) => setTimeout(resolve, 600));
       setStatusMessage({ 
         type: 'success', 
-        text: `Settings saved for '${PLATFORMS.find(p => p.key === activePlatform)?.label}' tab!` 
+        text: `Settings successfully saved for the '${PLATFORMS.find(p => p.key === activePlatform)?.label}' tab!` 
       });
     } catch (err) {
       setStatusMessage({ type: 'error', text: 'Failed to update settings. Please try again.' });
@@ -48,7 +48,7 @@ export default function GoogleSheetSync() {
       const res = await fetch(`${API_BASE_URL}/api/sync/now`, { method: 'POST' });
       if (!res.ok) throw new Error('Sync failed');
       const data = await res.json();
-      setStatusMessage({ type: 'success', text: `Sync triggered on Render backend: ${data.status}` });
+      setStatusMessage({ type: 'success', text: `Sync triggered successfully: ${data.status}` });
     } catch (err) {
       setStatusMessage({ type: 'error', text: `Sync trigger error: ${err.message}` });
     } finally {
@@ -59,16 +59,16 @@ export default function GoogleSheetSync() {
   const currentPlatform = PLATFORMS.find((p) => p.key === activePlatform);
 
   return (
-    <div className="p-6 max-w-6xl mx-auto text-slate-100 pb-20">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+    <div className="p-6 max-w-6xl mx-auto text-gray-900">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-2xl font-bold">Google Sheet Sync Destinations</h1>
-          <p className="text-sm text-slate-400">Configure worksheet tab targets and force manual syncs across all 10 marketing platforms.</p>
+          <h1 className="text-3xl font-bold text-gray-900">Data Destinations</h1>
+          <p className="text-sm text-gray-500 mt-1">Configure spreadsheet connections and force manual syncs across all platforms.</p>
         </div>
         <button
           onClick={handleTriggerSync}
           disabled={isSyncing}
-          className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 font-medium rounded-lg transition-colors flex items-center gap-2 text-sm shadow-md cursor-pointer"
+          className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium rounded-lg transition-colors flex items-center gap-2 text-sm shadow-sm cursor-pointer"
         >
           {isSyncing ? 'Syncing Engine...' : '⚡ Trigger Manual Sync'}
         </button>
@@ -77,15 +77,15 @@ export default function GoogleSheetSync() {
       {statusMessage && (
         <div className={`p-4 mb-6 rounded-lg text-sm border font-medium transition-all ${
           statusMessage.type === 'success' 
-            ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300' 
-            : 'bg-rose-950/40 border-rose-500/40 text-rose-300'
+            ? 'bg-green-50 border-green-200 text-green-800' 
+            : 'bg-red-50 border-red-200 text-red-800'
         }`}>
           {statusMessage.text}
         </div>
       )}
 
-      {/* Platform Tabs Navigation */}
-      <div className="flex border-b border-slate-800 overflow-x-auto gap-1 mb-6 pb-1 no-scrollbar">
+      {/* Platform Tabs Navigation (Light Theme) */}
+      <div className="flex border-b border-gray-200 overflow-x-auto gap-2 mb-6 pb-px no-scrollbar">
         {PLATFORMS.map((platform) => (
           <button
             key={platform.key}
@@ -93,10 +93,10 @@ export default function GoogleSheetSync() {
               setActivePlatform(platform.key);
               setStatusMessage(null);
             }}
-            className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap cursor-pointer ${
+            className={`px-4 py-2.5 text-sm font-semibold rounded-t-lg transition-colors whitespace-nowrap cursor-pointer ${
               activePlatform === platform.key
-                ? 'bg-slate-800 text-indigo-400 border-b-2 border-indigo-500'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+                ? 'bg-white text-blue-600 border border-gray-200 border-b-white -mb-px shadow-sm'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100 border border-transparent'
             }`}
           >
             {platform.label}
@@ -105,20 +105,20 @@ export default function GoogleSheetSync() {
       </div>
 
       {/* Selected Platform Settings Panel */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl">
-        <div className="mb-6 pb-4 border-b border-slate-800 flex justify-between items-center">
+      <div className="bg-white border border-gray-200 rounded-xl p-8 shadow-sm">
+        <div className="mb-8 pb-5 border-b border-gray-100 flex justify-between items-center">
           <div>
-            <h2 className="text-lg font-semibold text-white">{currentPlatform.label} Configuration</h2>
-            <p className="text-xs text-slate-400">Writes performance data directly to tab: <code className="text-indigo-300 bg-slate-800 px-1.5 py-0.5 rounded font-mono">{currentPlatform.tabName}</code></p>
+            <h2 className="text-xl font-bold text-gray-900">{currentPlatform.label} Configuration</h2>
+            <p className="text-sm text-gray-500 mt-1">Writes performance data directly to tab: <code className="text-blue-700 bg-blue-50 px-2 py-0.5 rounded font-mono border border-blue-100">{currentPlatform.tabName}</code></p>
           </div>
-          <span className="px-3 py-1 text-xs rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-mono">
+          <span className="px-3 py-1.5 text-xs rounded-full bg-gray-100 text-gray-600 border border-gray-200 font-medium">
             6-Hour Schedule Active
           </span>
         </div>
 
         <form onSubmit={handleSave} className="space-y-6">
           <div>
-            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
               Google Sheet Spreadsheet ID
             </label>
             <input
@@ -126,45 +126,45 @@ export default function GoogleSheetSync() {
               value={sheetId}
               onChange={(e) => setSheetId(e.target.value)}
               placeholder="e.g. 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors font-mono"
+              className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow font-mono"
             />
-            <p className="text-xs text-slate-500 mt-1.5">
-              Found in your browser address bar between <code className="text-slate-400">/d/</code> and <code className="text-slate-400">/edit</code>.
+            <p className="text-xs text-gray-500 mt-2">
+              Found in your browser address bar between <code className="text-gray-700 bg-gray-100 px-1 rounded">/d/</code> and <code className="text-gray-700 bg-gray-100 px-1 rounded">/edit</code>.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Worksheet Tab Name
               </label>
               <input
                 type="text"
                 readOnly
                 value={currentPlatform.tabName}
-                className="w-full bg-slate-800/50 border border-slate-800 rounded-lg px-4 py-2.5 text-sm text-slate-400 cursor-not-allowed font-mono"
+                className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-500 cursor-not-allowed font-mono"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Write Strategy
               </label>
               <input
                 type="text"
                 readOnly
                 value="Full Tab Wipe & Overwrite (A:Z)"
-                className="w-full bg-slate-800/50 border border-slate-800 rounded-lg px-4 py-2.5 text-sm text-slate-400 cursor-not-allowed font-mono"
+                className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-500 cursor-not-allowed font-mono"
               />
             </div>
           </div>
 
           {/* Form Submit Footer */}
-          <div className="pt-6 border-t border-slate-800 flex items-center justify-between">
-            <span className="text-xs text-slate-500">Saves target sheet settings for {currentPlatform.label}</span>
+          <div className="pt-8 mt-4 border-t border-gray-100 flex items-center justify-between">
+            <span className="text-sm text-gray-500">Updates target sheet settings for {currentPlatform.label}</span>
             <button
               type="submit"
               disabled={isSaving}
-              className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold text-sm rounded-lg shadow-lg shadow-emerald-600/20 transition-all cursor-pointer flex items-center gap-2"
+              className="px-6 py-3 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-semibold text-sm rounded-lg shadow-md transition-all cursor-pointer flex items-center gap-2"
             >
               {isSaving ? 'Saving Settings...' : '💾 Save Settings'}
             </button>
